@@ -1,5 +1,5 @@
 # Genre Aficionado
-A project by Nick Boukis that uses machine learning to identify genres based on album covers.    
+An ongoing project by Nick Boukis to visualize and find trends in music. My main goal is to use machine learning to identify genres based on album covers. I have also created the [Chromatic Genre Explorer](http://boukisn.github.io/genre-aficionado/chroma/) which breaks down genres by color and maps them in 3D space.
 Utilizes Spotify's [Web API](https://developer.spotify.com/web-api/) & Google's [TensorFlow](https://www.tensorflow.org/).
 
 ### Getting Album Art (Option 1, Quick, Easy)
