@@ -60,15 +60,23 @@
       </ul>
     </div>
   </nav>
-    <div id="container">
 
-    </div>
+
+    <div id="container"></div>
+    <div id="click_notice" style="position: fixed; float: right; z-index: 999; bottom: 50px; right: 50px;">
+          <span style="color: white; text-transform: uppercase; font-family:'Roboto'; font-weight: 100; letter-spacing: 4px;">
+              Click & Drag
+          </span>
+      </div>
+
 </body>
 </html>
 <script>
  $('#modal1').openModal();
 
 $(function () {
+
+    var clicked_and_dragged = false;
 
 
     // Set up the chart
@@ -1523,6 +1531,7 @@ $(function () {
                 chart.options.chart.options3d.alpha = newAlpha;
 
                 chart.redraw(false);
+                clicked_and_dragged = true;
             },
             'mouseup touchend': function () {
                 $(document).unbind('.hc');
@@ -1560,6 +1569,5 @@ $(function () {
 
         chart.redraw();
     }
-
 });
 </script>
