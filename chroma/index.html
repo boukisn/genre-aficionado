@@ -65,11 +65,12 @@
 
 
     <div id="container"></div>
-    <div id="click_notice" style="position: fixed; float: right; z-index: 999; bottom: 50px; right: 50px;">
-          <span style="color: white; text-transform: uppercase; font-family:'Roboto'; font-weight: 100; letter-spacing: 4px;">
-              Click & Drag
-          </span>
-      </div>
+    <div id="click_notice" style="position: fixed; float: right; z-index: 999; bottom: 50px; right: 50px;  text-align: right;">
+        <span style="color: white; text-transform: uppercase; font-family:'Roboto'; font-size: 12px; font-weight: 100; letter-spacing: 4px;">
+            Click & Drag To Explore<br>
+            Click Any Point To Listen
+        </span>
+    </div>
 
 </body>
 </html>
@@ -80,8 +81,8 @@ $(function () {
 
     var clicked_and_dragged = false;
 
-    var ajax_allowed = true;
-    var currPoint = null;
+    var ajax_allowed = false;
+    var tooltip_mode = "HOVER"; //"PLAY", "HOVER", "NONE"
 
     // Set up the chart
     var chart = new Highcharts.Chart({
@@ -124,9 +125,11 @@ $(function () {
                 stickyTracking: true,
                 events: {
                     click: function(evt) {
-                        ajax_allowed = false;
+                        tooltip_mode = "PLAY";
+                        this.chart.tooltip.refresh(evt.point, evt);
+                        tooltip_mode = "NONE";
                         setTimeout(function(){
-                            ajax_allowed = true;
+                            tooltip_mode = "HOVER";
                         }, 3000);
                     }
                 }
@@ -177,7 +180,7 @@ $(function () {
                     var artist_id = null;
                     var track_uri = null;
 
-                    if(ajax_allowed)
+                    if(tooltip_mode == "PLAY")
                     {
                         $.ajax({
                           dataType: "json",
@@ -199,6 +202,11 @@ $(function () {
 
                         return '<b style="color: white; font-size: 25px; text-transform: uppercase; font-family:\'Roboto\'; font-style: italic; font-weight: 200;">' + this.series.name + '</b></br><div style="color: ' + this.series.color + '; margin-bottom: 5px; font-size: 25px; text-transform: uppercase;font-family:\'Roboto\'; font-weight: 300; "> ' + this.series.color + '</div><iframe src="https://embed.spotify.com/?uri=' + track_uri + '" width="250" height="80" frameborder="0" allowtransparency="true"></iframe>';
                     }
+                    else if (tooltip_mode == "HOVER")
+                    {
+                        return '<b style="color: white; font-size: 25px; text-transform: uppercase; font-family:\'Roboto\'; font-style: italic; font-weight: 200;">' + this.series.name + '</b></br><div style="color: ' + this.series.color + '; margin-bottom: 5px; font-size: 25px; text-transform: uppercase;font-family:\'Roboto\'; font-weight: 300; "> ' + this.series.color + '</div>';
+                    }
+
                 },
                 positioner: function () {
                     return { x: 36, y: 0 };
@@ -1550,7 +1558,7 @@ $(function () {
 
     $("#search_close").on('click', function () {
         $('#search').val("");
-        
+
         $(chart.series).each(function(i, serie){
             serie.setVisible(true, false);
         });
