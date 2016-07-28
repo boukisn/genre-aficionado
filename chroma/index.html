@@ -56,7 +56,7 @@
             <div class="input-field" style="background-color: white;">
               <input id="search" type="search" style="color: black;" autocomplete='off' placeholder="Find A Genre">
               <label for="search"><i class="material-icons" style="font-size: 23px; color: black; margin-top: 1px;">search</i></label>
-              <i class="material-icons" style="font-size: 23px; margin-top: 1px;">close</i>
+              <i id="search_close" class="material-icons" style="font-size: 23px; margin-top: 1px;">close</i>
             </div>
         </li>
       </ul>
@@ -80,6 +80,8 @@ $(function () {
 
     var clicked_and_dragged = false;
 
+    var ajax_allowed = true;
+    var currPoint = null;
 
     // Set up the chart
     var chart = new Highcharts.Chart({
@@ -118,8 +120,17 @@ $(function () {
             scatter: {
                 width: 10,
                 height: 10,
-                depth: 10
-            }
+                depth: 10,
+                stickyTracking: true,
+                events: {
+                    click: function(evt) {
+                        ajax_allowed = false;
+                        setTimeout(function(){
+                            ajax_allowed = true;
+                        }, 3000);
+                    }
+                }
+            },
         },
         yAxis: {
                 gridLineWidth: 0,
@@ -156,13 +167,38 @@ $(function () {
             enabled: false
         },
         tooltip: {
+                enabled: true,
                 backgroundColor: 'none',
                 borderWidth: 0,
                 shadow: false,
                 useHTML: true,
                 padding: 0,
                 formatter: function() {
-                    return '<b style="color: white; font-size: 25px; text-transform: uppercase; font-family:\'Roboto\'; font-style: italic; font-weight: 200;">' + this.series.name + '</b></br><div style="color: ' + this.series.color + '; font-size: 25px; text-transform: uppercase;font-family:\'Roboto\'; font-weight: 300; "> ' + this.series.color + '</div>';
+                    var artist_id = null;
+                    var track_uri = null;
+
+                    if(ajax_allowed)
+                    {
+                        $.ajax({
+                          dataType: "json",
+                          url: 'https://api.spotify.com/v1/search?q=genre%3A"' + this.series.name + '"&type=artist',
+                          async: false, // this will stall the tooltip
+                          success: function(ajax){
+                            artist_id = ajax.artists.items[0].uri.split(":")[2];
+                          }
+                        });
+
+                        $.ajax({
+                          dataType: "json",
+                          url: 'https://api.spotify.com/v1/artists/' + artist_id + '/top-tracks?country=US',
+                          async: false, // this will stall the tooltip
+                          success: function(ajax){
+                            track_uri = ajax.tracks[0].uri;
+                          }
+                        });
+
+                        return '<b style="color: white; font-size: 25px; text-transform: uppercase; font-family:\'Roboto\'; font-style: italic; font-weight: 200;">' + this.series.name + '</b></br><div style="color: ' + this.series.color + '; margin-bottom: 5px; font-size: 25px; text-transform: uppercase;font-family:\'Roboto\'; font-weight: 300; "> ' + this.series.color + '</div><iframe src="https://embed.spotify.com/?uri=' + track_uri + '" width="250" height="80" frameborder="0" allowtransparency="true"></iframe>';
+                    }
                 },
                 positioner: function () {
                     return { x: 36, y: 0 };
@@ -1512,6 +1548,15 @@ $(function () {
         ]
     });
 
+    $("#search_close").on('click', function () {
+        $('#search').val("");
+        
+        $(chart.series).each(function(i, serie){
+            serie.setVisible(true, false);
+        });
+
+        chart.redraw();
+    });
 
     // Add mouse events for rotation
     $(chart.container).bind('mousedown.hc touchstart.hc', function (eStart) {
@@ -1561,15 +1606,21 @@ $(function () {
 
     //user is "finished typing," do something
     function doneTyping () {
+
          $(chart.series).each(function(i, serie){
-            if(!(~serie.options.id.indexOf($input.val())))
-            {
-                serie.setVisible(false, false);
+            var search_words = $input.val().toLowerCase().split(" ");
+            for(var i = 0; i < search_words.length; i++){
+                if(!(~serie.options.id.toLowerCase().indexOf(search_words[i])))
+                {
+                    serie.setVisible(false, false);
+                }
+                else
+                {
+                    serie.setVisible(true, false);
+                    break;
+                }
             }
-            else
-            {
-                serie.setVisible(true, false);
-            }
+
         });
 
         chart.redraw();
